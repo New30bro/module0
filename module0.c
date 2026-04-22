@@ -72,55 +72,102 @@ void afficher(Etudiant V)
     };
     printf("La moyenne de l'etudiant est : %.3f\n",V.moy);
 }
-// La function recherche prend en paramètre un tableau de structures Etudiant t et un entier x représentant le matricule de l'étudiant à rechercher. La fonction parcourt le tableau t à l'aide d'une boucle for et compare le matricule de chaque étudiant avec x. Si une correspondance est trouvée, l'indice de l'étudiant dans le tableau est retourné. Si aucune correspondance n'est trouvée après avoir parcouru tout le tableau, la fonction retourne -1 pour indiquer que l'étudiant n'a pas été trouvé.
+// La function recherche prend en paramètre un tableau de structures Etudiant t et un entier x représentant le matricule de l'étudiant à rechercher. La fonction parcourt le tableau t à l'aide d'une boucle for et compare le matricule de chaque étudiant avec x. Si une correspondence est trouvée, l'indice de l'étudiant dans le tableau est retourné. Si aucune correspondence n'est trouvée après avoir parcouru tout le tableau, la fonction retourne -1 pour indiquer que l'étudiant n'a pas été trouvé.
 int recherche(Etudiant *t, int x)
 {
+    if(t==NULL){
+        printf("Aucun etudiant n'existe!!! \n");
+        return -1;
+    };
     int i;
-    for(i=0;i<h;i++)
+    while(t[i].ind!=x && i<h)
     {
-        if(x==t[i].ind){
-            return i;
-        }else
-        {
-            return -1;
-        };
+        i++;
+    };
+    if(i==h){
+        return -1;
+    }else{
+        return i;
     };
 }
-Etudiant Supprimer(Etudiant *t, int x) // La function Supprimer prend en paramètre un tableau de structures Etudiant t et un entier x représentant le matricule de l'étudiant à supprimer. La fonction utilise la function recherche pour trouver l'indice de l'étudiant dans le tableau. Si l'étudiant est trouvé, la mémoire allouée pour les notes de cet étudiant est libérée à l'aide de la function free, puis le tableau t est redimensionné à l'aide de la function realloc pour supprimer l'étudiant du tableau. Enfin, la variable h, qui représente le nombre d'étudiants dans le tableau, est décrémentée de 1.
+Etudiant *Supprimer(Etudiant *t, int x) // La function Supprimer prend en paramètre un tableau de structures Etudiant t et un entier x représentant le matricule de l'étudiant à supprimer. La fonction utilise la function recherche pour trouver l'indice de l'étudiant dans le tableau. Si l'étudiant est trouvé, la mémoire allouée pour les notes de cet étudiant est libérée à l'aide de la function free, puis le tableau t est redimensionné à l'aide de la function realloc pour supprimer l'étudiant du tableau. Enfin, la variable h, qui représente le nombre d'étudiants dans le tableau, est décrémentée de 1.
 {
-    free(t[recherche(t,x)].note);
+    if(t==NULL){
+        printf("Aucun etudiant n'existe \n");
+        return t;
+    };
+    if(recherche(t,x)==-1){
+        printf("Cet etudiant n'existe pas \n");
+        return t;
+    }else{
+        free(t[recherche(t,x)].note);
+    };
     t=(Etudiant*)realloc(t,(h-1)*sizeof(Etudiant));
     h--;
     return t;
 }
-Etudiant Modifier(Etudiant *t, int x) // La function Modifier prend en paramètre un tableau de structures Etudiant t et un entier x représentant le matricule de l'étudiant à modifier. La fonction utilise la function recherche pour trouver l'indice de l'étudiant dans le tableau. Si l'étudiant est trouvé, la function Ajout est appelée pour permettre à l'utilisateur de saisir les nouvelles informations de l'étudiant, qui sont ensuite assignées à la position correspondante dans le tableau t.
-{
-    t[recherche(t,x)]=Ajout();
-    return t;
-}
-Etudiant nouveau(Etudiant *t, int x) // La function nouveau prend en paramètre un tableau de structures Etudiant t et un entier x représentant le matricule de l'étudiant à ajouter. La fonction utilise la function Ajout pour permettre à l'utilisateur de saisir les informations du nouvel étudiant, qui sont ensuite assignées à la position correspondante dans le tableau t.
+Etudiant *nouveau(Etudiant *t, int x) // La function nouveau prend en paramètre un tableau de structures Etudiant t et un entier x représentant le matricule de l'étudiant à ajouter. La fonction utilise la function Ajout pour permettre à l'utilisateur de saisir les informations du nouvel étudiant, qui sont ensuite assignées à la position correspondante dans le tableau t.
 {
     char temp[20];
-    int c;
-    do{
-        printf("Combien d'etudiants voulez vous ajouter? : \n");
-        fgets(temp,sizeof(temp),stdin);
-        if(!EstEntier(temp)){
-            printf("Attention!!! Ceci n'est pas un entier \n");
-        };
-    }while(!EstEntier(temp));
-    c=atoi(temp);
-    t=(Etudiant*)realloc(t,(h+c)*sizeof(Etudiant));
-    for(int i=h;i<h+c;i++)
+    if(t==NULL)
     {
-        t[i]=Ajout();
+        do{
+            printf("Combien d'etudiants voulez vous ajouter? : \n");
+            fgets(temp,sizeof(temp),stdin);
+            if(!EstEntier(temp)){
+                printf("Attention!!! Ceci n'est pas un entier \n");
+            };
+        }while(!EstEntier(temp));
+        h=atoi(temp);
+        t=(Etudiant*)malloc(h*sizeof(Etudiant));
+        do{
+            printf("Entrez le nombre de matieres: \n");
+            fgets(temp,sizeof(temp),stdin);
+            if(!EstEntier(temp)){
+                printf("Attention!!! Ceci n'est pas un entier \n");
+            };
+        }while(!EstEntier(temp));
+        n=atoi(temp);
+        for(int i=0;i<h;i++)
+        {
+            t[i]=Ajout();
+        };
+    }else{ // Si le tableau t n'est pas vide, la function recherche est utilisée pour vérifier si un étudiant avec le matricule x existe déjà dans le tableau. Si un étudiant avec ce matricule est trouvé, un message est affiché pour indiquer que cet étudiant existe déjà, et le tableau t est retourné sans ajouter de nouvel étudiant. Si aucun étudiant avec le matricule x n'est trouvé, la function continue pour permettre à l'utilisateur d'ajouter de nouveaux étudiants.
+        if(recherche(t,x)!=-1){
+            printf("Cet etudiant existe deja \n");
+            return t;
+        }else{
+            t=(Etudiant*)realloc(t,(h+1)*sizeof(Etudiant));
+            t[h]=Ajout();
+            h++;
+            return t;
+        };
     };
-    h+=c;
+}
+Etudiant *Modifier(Etudiant *t, int x) // La function Modifier prend en paramètre un tableau de structures Etudiant t et un entier x représentant le matricule de l'étudiant à modifier. La function recherche est utilisée pour trouver l'indice de l'étudiant dans le tableau. Si l'étudiant est trouvé, la function Ajout est appelée pour permettre à l'utilisateur de saisir les nouvelles informations de l'étudiant, qui sont ensuite assignées à la position correspondante dans le tableau t.
+{
+    char conf;
+    if(t==NULL){
+        nouveau(t,x);
+        return t;
+    };
+    if(recherche(t,x)==-1){
+        printf("Cet etudiant n'existe pas \n");
+        printf("Voulez vous l'ajouter? (O/N) \n");
+        scanf("%c",&conf);
+        if(conf=='O' || conf=='o'){
+            nouveau(t,x);
+            return t;
+        }else{
+            return t;
+        };
+    };
+    t[recherche(t,x)]=Ajout();
     return t;
 }
 int main()
 {
-    char temp[20];
+    /*char temp[20];
     do{
         printf("Entrez le nombre d'etudiants: \n");
         fgets(temp,sizeof(temp),stdin);
@@ -142,6 +189,7 @@ int main()
     {
         Tab[i]=Ajout();
         afficher(Tab[i]);
-    };
+    };*/
+    Supprimer(Tab,200224);
     return 0;
 }
