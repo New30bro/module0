@@ -6,7 +6,7 @@
 int n = 0;
 
 typedef struct {
-    char nom[50];
+    char nom[100];
     float *note;
     float moy;
     int ind;
@@ -20,19 +20,20 @@ typedef struct {
 
 void creerBase(BaseEtudiants **ptr, int capaciteInitiale)
 {
-    *ptr = malloc(sizeof(BaseEtudiants));
-    if (*ptr == NULL) {
-        printf("Erreur d'allocation sur la base de donnees\n");
+    BaseEtudiants *p=(BaseEtudiants*)malloc(sizeof(BaseEtudiants));
+    if(p==NULL){
+        printf("Erreur d'allocation!!!\n");
         exit(1);
     }
-    (*ptr)->data = malloc(capaciteInitiale * sizeof(Etudiant));
-    if ((*ptr)->data == NULL) {
-        printf("Erreur d'allocation sur la liste d'etudiants\n");
-        free(*ptr);
+    p->data=(Etudiant*)malloc(capaciteInitiale*sizeof(Etudiant));
+    if(p->data==NULL){
+        printf("Erreur d'allocation memoire pour la liste");
+        free(p);
         exit(1);
     }
-    (*ptr)->taille = 0;
-    (*ptr)->capacite = capaciteInitiale;
+    p->taille=0;
+    p->capacite=capaciteInitiale;
+    *ptr=p;
 }
 
 int EstEntier(const char *x)
@@ -55,9 +56,9 @@ int EstEntier(const char *x)
     return 1;
 }
 
-void AjouterEtudiant(BaseEtudiants *ptr)
+void AjouterEtudiant(BaseEtudiants **ptr)
 {
-    if (ptr == NULL || ptr->data == NULL) {
+    if (*ptr == NULL || (*ptr)->data == NULL) {
         printf("La base de donnees n'est pas initialisee.\n");
         return;
     }
@@ -66,32 +67,32 @@ void AjouterEtudiant(BaseEtudiants *ptr)
         return;
     }
 
-    if (ptr->capacite == ptr->taille) {
-        int nouvelleCap = ptr->capacite * 2;
+    if ((*ptr)->capacite == (*ptr)->taille) {
+        int nouvelleCap = (*ptr)->capacite * 2;
         if (nouvelleCap == 0) {
             nouvelleCap = 2;
         }
-        Etudiant *temp = realloc(ptr->data, nouvelleCap * sizeof(Etudiant));
+        Etudiant *temp =(Etudiant*)realloc((*ptr)->data, nouvelleCap * sizeof(Etudiant));
         if (temp == NULL) {
             printf("Le realloc de la liste d'etudiants a echoue\n");
             exit(1);
         }
-        ptr->data = temp;
-        ptr->capacite = nouvelleCap;
+        (*ptr)->data = temp;
+        (*ptr)->capacite = nouvelleCap;
     }
 
-    int index = ptr->taille;
-    float *notes = malloc(n * sizeof(float));
+    int index = (*ptr)->taille;
+    float *notes = (float*)malloc(n * sizeof(float));
     if (notes == NULL) {
         printf("Erreur d'allocation pour les notes\n");
         exit(1);
     }
 
-    char temp[20];
+    char temp[100];
     printf("Entrez le nom de l'etudiant: \n");
     while (getchar() != '\n');
-    if (fgets(ptr->data[index].nom, sizeof(ptr->data[index].nom), stdin) != NULL) {
-        ptr->data[index].nom[strcspn(ptr->data[index].nom, "\r\n")] = '\0';
+    if (fgets((*ptr)->data[index].nom, sizeof((*ptr)->data[index].nom), stdin) != NULL) {
+        (*ptr)->data[index].nom[strcspn((*ptr)->data[index].nom, "\r\n")] = '\0';
     }
 
     do {
@@ -103,7 +104,7 @@ void AjouterEtudiant(BaseEtudiants *ptr)
             printf("Attention!!! Ceci n'est pas un entier \n");
         }
     } while (!EstEntier(temp));
-    ptr->data[index].ind = atoi(temp);
+    (*ptr)->data[index].ind = atoi(temp);
 
     for (int i = 0; i < n; i++) {
         do {
@@ -122,13 +123,13 @@ void AjouterEtudiant(BaseEtudiants *ptr)
     }
     while (getchar() != '\n');
 
-    ptr->data[index].note = notes;
-    ptr->data[index].moy = 0.0f;
+    (*ptr)->data[index].note = notes;
+    (*ptr)->data[index].moy = 0.0f;
     for (int i = 0; i < n; i++) {
-        ptr->data[index].moy += notes[i];
+        (*ptr)->data[index].moy += notes[i];
     }
-    ptr->data[index].moy /= n;
-    ptr->taille++;
+    (*ptr)->data[index].moy /= n;
+    (*ptr)->taille++;
 }
 
 void afficher(const Etudiant *data)
@@ -158,37 +159,37 @@ int recherche(const BaseEtudiants *ptr, int x)
     return -1;
 }
 
-void Supprimer(BaseEtudiants *ptr, int x)
+void Supprimer(BaseEtudiants **ptr, int x)
 {
-    if (ptr == NULL || ptr->data == NULL) {
+    if (*ptr == NULL || (*ptr)->data == NULL) {
         printf("Aucun etudiant n'existe\n");
         return;
     }
-    int y = recherche(ptr, x);
+    int y = recherche(*ptr, x);
     if (y == -1) {
         printf("Cet etudiant n'existe pas \n");
         return;
     }
-    free(ptr->data[y].note);
-    for (int i = y; i < ptr->taille - 1; i++) {
-        ptr->data[i] = ptr->data[i + 1];
+    free((*ptr)->data[y].note);
+    for (int i = y; i < (*ptr)->taille - 1; i++) {
+        (*ptr)->data[i] = (*ptr)->data[i + 1];
     }
-    ptr->taille--;
+    (*ptr)->taille--;
 }
 
-void Modifier(BaseEtudiants *ptr, int x)
+void Modifier(BaseEtudiants **ptr, int x)
 {
-    if (ptr == NULL || ptr->data == NULL) {
+    if (*ptr == NULL || (*ptr)->data == NULL) {
         printf("Aucun etudiant n'existe \n");
         return;
     }
-    int y = recherche(ptr, x);
+    int y = recherche(*ptr, x);
     if (y == -1) {
         printf("Cet etudiant n'existe pas \n");
         return;
     }
 
-    char temp[20];
+    char temp[100];
     int choix;
 
     do {
@@ -210,8 +211,8 @@ void Modifier(BaseEtudiants *ptr, int x)
 
     if (choix == 1 || choix == 4) {
         printf("Entrez le nouveau nom de l'etudiant: \n");
-        if (fgets(ptr->data[y].nom, sizeof(ptr->data[y].nom), stdin) != NULL) {
-            ptr->data[y].nom[strcspn(ptr->data[y].nom, "\r\n")] = '\0';
+        if (fgets((*ptr)->data[y].nom, sizeof((*ptr)->data[y].nom), stdin) != NULL) {
+            (*ptr)->data[y].nom[strcspn((*ptr)->data[y].nom, "\r\n")] = '\0';
         }
     }
 
@@ -225,11 +226,11 @@ void Modifier(BaseEtudiants *ptr, int x)
                 printf("Attention!!! Ceci n\'est pas un entier \n");
             }
         } while (!EstEntier(temp));
-        ptr->data[y].ind = atoi(temp);
+        (*ptr)->data[y].ind = atoi(temp);
     }
 
     if (choix == 3 || choix == 4) {
-        float *notes = malloc(n * sizeof(float));
+        float *notes = (float*)malloc(n * sizeof(float));
         if (notes == NULL) {
             printf("Erreur d\'allocation pour les notes\n");
             exit(1);
@@ -252,20 +253,20 @@ void Modifier(BaseEtudiants *ptr, int x)
         }
         while (getchar() != '\n');
 
-        free(ptr->data[y].note);
-        ptr->data[y].note = notes;
-        ptr->data[y].moy = 0.0f;
+        free((*ptr)->data[y].note);
+        (*ptr)->data[y].note = notes;
+        (*ptr)->data[y].moy = 0.0f;
         for (int i = 0; i < n; i++) {
-            ptr->data[y].moy += notes[i];
+            (*ptr)->data[y].moy += notes[i];
         }
-        ptr->data[y].moy /= n;
+        (*ptr)->data[y].moy /= n;
     }
 }
 
-void Interface(BaseEtudiants *ptr)
+void Interface(BaseEtudiants **ptr)
 {
     int y;
-    char conf, temp[20];
+    char conf, temp[100];
     int rep, choix;
 
     do {
@@ -300,7 +301,7 @@ void Interface(BaseEtudiants *ptr)
                 } while (!EstEntier(temp));
                 rep = atoi(temp);
                 for (int i = 0; i < rep; i++) {
-                    AjouterEtudiant(ptr);
+                    AjouterEtudiant(&ptr);
                 }
                 break;
 
@@ -313,7 +314,7 @@ void Interface(BaseEtudiants *ptr)
                     }
                 } while (!EstEntier(temp));
                 rep = atoi(temp);
-                y = recherche(ptr, rep);
+                y = recherche(*ptr, rep);
                 if (y == -1) {
                     printf("Cet etudiant n'existe pas \n");
                 } else {
@@ -330,7 +331,7 @@ void Interface(BaseEtudiants *ptr)
                     }
                 } while (!EstEntier(temp));
                 rep = atoi(temp);
-                Modifier(ptr, rep);
+                Modifier(&ptr, rep);
                 break;
 
             case 4:
@@ -342,7 +343,7 @@ void Interface(BaseEtudiants *ptr)
                     }
                 } while (!EstEntier(temp));
                 rep = atoi(temp);
-                Supprimer(ptr, rep);
+                Supprimer(&ptr, rep);
                 break;
 
             case 5:
@@ -354,45 +355,45 @@ void Interface(BaseEtudiants *ptr)
                     }
                 } while (!EstEntier(temp));
                 rep = atoi(temp);
-                y = recherche(ptr, rep);
+                y = recherche(*ptr, rep);
                 if (y == -1) {
                     printf("Cet etudiant n'existe pas \n");
                 } else {
-                    afficher(&ptr->data[y]);
+                    afficher(&(*ptr)->data[y]);
                 }
                 break;
 
             case 6:
-                if (ptr == NULL || ptr->data == NULL || ptr->taille == 0) {
+                if (*ptr == NULL || (*ptr)->data == NULL || (*ptr)->taille == 0) {
                     printf("Aucun etudiant a afficher.\n");
                     break;
                 }
-                for (int j = 0; j < ptr->taille; j++) {
-                    afficher(&ptr->data[j]);
+                for (int j = 0; j < (*ptr)->taille; j++) {
+                    afficher(&(*ptr)->data[j]);
                 }
                 break;
 
             case 7:
-                if (ptr == NULL || ptr->data == NULL || ptr->taille == 0) {
+                if (*ptr == NULL || (*ptr)->data == NULL || (*ptr)->taille == 0) {
                     printf("Aucun etudiant a afficher.\n");
                     break;
                 }
-                for (int j = 0; j < ptr->taille; j++) {
-                    if (ptr->data[j].moy >= 10.0f) {
-                        afficher(&ptr->data[j]);
+                for (int j = 0; j < (*ptr)->taille; j++) {
+                    if ((*ptr)->data[j].moy >= 10.0f) {
+                        afficher(&(*ptr)->data[j]);
                     }
                 }
                 break;
 
             case 8:
-                if (ptr == NULL || ptr->data == NULL || ptr->taille == 0) {
+                if (*ptr == NULL || (*ptr)->data == NULL || (*ptr)->taille == 0) {
                     printf("Aucun etudiant a afficher.\n");
                     break;
                 }
                 printf("Les etudiants avec une moyenne inferieure a 10 sont : \n");
-                for (int j = 0; j < ptr->taille; j++) {
-                    if (ptr->data[j].moy < 10.0f) {
-                        afficher(&ptr->data[j]);
+                for (int j = 0; j < (*ptr)->taille; j++) {
+                    if ((*ptr)->data[j].moy < 10.0f) {
+                        afficher(&(*ptr)->data[j]);
                     }
                 }
                 break;
@@ -402,7 +403,12 @@ void Interface(BaseEtudiants *ptr)
                 scanf(" %c", &conf);
                 while (getchar() != '\n');
                 if (conf == 'O' || conf == 'o') {
-                    return;
+                    for (int i = 0; i < (*ptr)->taille; i++) {
+                        free((*ptr)->data[i].note);
+                    }
+                    free((*ptr)->data);
+                    free(*ptr);
+                    *ptr = NULL;
                 }
                 break;
 
@@ -424,12 +430,6 @@ int main()
     while (getchar() != '\n');
 
     creerBase(&ptr, 2);
-    Interface(ptr);
-
-    for (int i = 0; i < ptr->taille; i++) {
-        free(ptr->data[i].note);
-    }
-    free(ptr->data);
-    free(ptr);
+    Interface(&ptr);
     return 0;
 }
