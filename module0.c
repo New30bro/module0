@@ -75,6 +75,9 @@ void AjouterEtudiant(BaseEtudiants **ptr)
         Etudiant *temp =(Etudiant*)realloc((*ptr)->data, nouvelleCap * sizeof(Etudiant));
         if (temp == NULL) {
             printf("Le realloc de la liste d'etudiants a echoue\n");
+            free((*ptr)->data);
+            free(*ptr);
+            *ptr=NULL;
             exit(1);
         }
         (*ptr)->data = temp;
@@ -85,6 +88,9 @@ void AjouterEtudiant(BaseEtudiants **ptr)
     float *notes = (float*)malloc(n * sizeof(float));
     if (notes == NULL) {
         printf("Erreur d'allocation pour les notes\n");
+        free((*ptr)->data);
+        free(*ptr);
+        *ptr=NULL;
         exit(1);
     }
 
@@ -142,6 +148,11 @@ void afficher(const Etudiant *data)
     printf("Les notes de l'etudiant sont : \n");
     for (int i = 0; i < n; i++) {
         printf("%.2f\n", data->note[i]);
+    }
+    if(n==0){
+        printf("Les notes des etudiants n'ont pas ete mise a jour\n");
+        printf("Aucune moyenne disponible\n");
+        return;
     }
     printf("La moyenne de l'etudiant est : %.2f\n", data->moy);
 }
@@ -233,6 +244,9 @@ void Modifier(BaseEtudiants **ptr, int x)
         float *notes = (float*)malloc(n * sizeof(float));
         if (notes == NULL) {
             printf("Erreur d\'allocation pour les notes\n");
+            free((*ptr)->data);
+            free(*ptr);
+            *ptr = NULL;
             exit(1);
         }
 
