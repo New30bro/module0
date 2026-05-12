@@ -1,41 +1,50 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-
-int n = 0;
-
-typedef struct {
-    char nom[50];
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<ctype.h>
+int n=0;
+typedef struct Etudiant
+{
+    char nom[100];
     float *note;
     float moy;
     int ind;
-} Etudiant;
-
-typedef struct {
+}Etudiant;
+typedef struct Noeud{
     Etudiant *data;
+    struct Noeud *suivant;
+}Noeud;
+typedef struct BaseEtudiants{
+    Noeud *tete;
     int taille;
-    int capacite;
-} BaseEtudiants;
-
-void creerBase(BaseEtudiants **ptr, int capaciteInitiale)
+}BaseEtudiants;
+BaseEtudiants *initBase(BaseEtudiants *ptr)
 {
-    *ptr = malloc(sizeof(BaseEtudiants));
-    if (*ptr == NULL) {
-        printf("Erreur d'allocation sur la base de donnees\n");
+    ptr=(BaseEtudiants*)malloc(sizeof(BaseEtudiants));
+    if(ptr==NULL){
+        printf("Erreur d'allocation de la base de donnees d'etudiants\n");
         exit(1);
     }
-    (*ptr)->data = malloc(capaciteInitiale * sizeof(Etudiant));
-    if ((*ptr)->data == NULL) {
-        printf("Erreur d'allocation sur la liste d'etudiants\n");
-        free(*ptr);
-        exit(1);
-    }
-    (*ptr)->taille = 0;
-    (*ptr)->capacite = capaciteInitiale;
+    ptr->tete=NULL;
+    ptr->taille=0;
+    return ptr;
 }
-
-int EstEntier(const char *x)
+Noeud *creerNoeud(BaseEtudiants *ptr)
+{
+    if(ptr==NULL){
+        printf("Base de donnees introuvable\n");
+        return NULL;
+    }
+    Noeud *unit=(Noeud*)malloc(sizeof(Noeud));
+    if(unit==NULL){
+        printf("Erreur d'allocation memoire au noeud\n");
+        return NULL;
+    }
+    unit->data=NULL;
+    unit->suivant=NULL;
+    return unit;
+}
+int EstEntier(char *x)
 {
     if (x == NULL) {
         return 0;
@@ -54,382 +63,354 @@ int EstEntier(const char *x)
     }
     return 1;
 }
-
-void AjouterEtudiant(BaseEtudiants *ptr)
+Etudiant *creerEtudiant(BaseEtudiants *ptr)
 {
-    if (ptr == NULL || ptr->data == NULL) {
-        printf("La base de donnees n'est pas initialisee.\n");
-        return;
-    }
-    if (n <= 0) {
-        printf("Le nombre de notes n'a pas ete defini.\n");
-        return;
-    }
-
-    if (ptr->capacite == ptr->taille) {
-        int nouvelleCap = ptr->capacite * 2;
-        if (nouvelleCap == 0) {
-            nouvelleCap = 2;
+    if(ptr==NULL){
+        printf("Base de donnees vide \n");
+        printf("Impossible de creer l'etudiant\n");
+        return NULL;
+    }else
+    {
+        if(ptr->tete==NULL){
+            printf("Abscence de noeud de stockage\n");
+            printf("Impossible de creer un etudiant\n");
+            return NULL;
         }
-        Etudiant *temp = realloc(ptr->data, nouvelleCap * sizeof(Etudiant));
-        if (temp == NULL) {
-            printf("Le realloc de la liste d'etudiants a echoue\n");
-            exit(1);
-        }
-        ptr->data = temp;
-        ptr->capacite = nouvelleCap;
     }
-
-    int index = ptr->taille;
-    float *notes = malloc(n * sizeof(float));
-    if (notes == NULL) {
-        printf("Erreur d'allocation pour les notes\n");
-        exit(1);
+    Etudiant *V=(Etudiant*)malloc(sizeof(Etudiant));
+    char temp[100];
+    int i;
+    float sum=0;
+    if(V==NULL){
+        printf("Erreur d'allocation memoire a l'etudiant\n");
+        free(V);
+        return NULL;
     }
-
-    char temp[20];
+    V->note=(float*)malloc(n*sizeof(float));
+    if(V->note==NULL){
+        printf("Erreur d'allocation memoire pour les notes de l'etudiant\n");
+        free(V);
+        return NULL;
+    }
     printf("Entrez le nom de l'etudiant: \n");
-    while (getchar() != '\n');
-    if (fgets(ptr->data[index].nom, sizeof(ptr->data[index].nom), stdin) != NULL) {
-        ptr->data[index].nom[strcspn(ptr->data[index].nom, "\r\n")] = '\0';
+    fflush(stdin);
+    if(fgets(V->nom,sizeof(V->nom),stdin)!=NULL){
+        V->nom[strcspn(V->nom,"\n")]='\0';
     }
-
-    do {
+    do{
         printf("Entrez le matricule de l'etudiant: \n");
-        if (fgets(temp, sizeof(temp), stdin) == NULL) {
-            continue;
+        fgets(temp,sizeof(temp),stdin);
+        if(!EstEntier(temp)){
+            printf("Attention!!! Entrez uniquement un nombre ici: \n");
         }
-        if (!EstEntier(temp)) {
-            printf("Attention!!! Ceci n'est pas un entier \n");
-        }
-    } while (!EstEntier(temp));
-    ptr->data[index].ind = atoi(temp);
-
-    for (int i = 0; i < n; i++) {
-        do {
-            printf("Entrez la %d e note de l'etudiant: \n", i + 1);
-            if (scanf("%f", &notes[i]) != 1) {
-                printf("Valeur non valide. Recommencez.\n");
-                while (getchar() != '\n');
+    }while(!EstEntier(temp));
+    V->ind=atoi(temp);
+    if(n==0){
+        printf("Le nombre de note n'a pas ete initialise\n");
+        return V;
+    }else
+    {
+        for(i=0;i<n;i++)
+        {
+            printf("Entrez la %d e note de l'etudiant: \n",i+1);
+            if(scanf("%f",&V->note[i])!=1){
+                while(getchar()!='\n');
+                i--;
                 continue;
             }
-            if (notes[i] < 0.0f || notes[i] > 20.0f) {
-                printf("La note doit etre entre 0 et 20.\n");
-                continue;
-            }
-            break;
-        } while (1);
+            if(V->note[i]<0 || V->note[i]>20){i--;};
+            sum+=V->note[i];
+        }
+        V->moy = sum / n;
     }
-    while (getchar() != '\n');
-
-    ptr->data[index].note = notes;
-    ptr->data[index].moy = 0.0f;
-    for (int i = 0; i < n; i++) {
-        ptr->data[index].moy += notes[i];
-    }
-    ptr->data[index].moy /= n;
-    ptr->taille++;
+    return V;
 }
-
-void afficher(const Etudiant *data)
+void afficherEtudiant(Etudiant *e)
 {
-    if (data == NULL) {
+    if(e==NULL){
+        printf("Etudiant invalide\n");
         return;
     }
-    printf("Le nom de l'etudiant : %s\n", data->nom);
-    printf("L'identifiant de l'etudiant : %d\n", data->ind);
-    printf("Les notes de l'etudiant sont : \n");
-    for (int i = 0; i < n; i++) {
-        printf("%.2f\n", data->note[i]);
+    printf("Nom: %s\n",e->nom);
+    printf("ID: %d\n",e->ind);
+    if(n==0){
+        printf("Les notes n'ont pas ete initialise\n");
+        printf("Moyenne non disponible\n");
+        return;
     }
-    printf("La moyenne de l'etudiant est : %.2f\n", data->moy);
+    printf("Les notes de l'etudiant sont: \n");
+    for(int i=0;i<n;i++)
+    {
+        printf("Note %d: %.3f\n",i+1,e->note[i]);
+    }
+    printf("Moyenne: %.3f\n",e->moy);
 }
-
-int recherche(const BaseEtudiants *ptr, int x)
+void afficher(BaseEtudiants *ptr)
 {
-    if (ptr == NULL || ptr->data == NULL) {
-        return -1;
-    }
-    for (int i = 0; i < ptr->taille; i++) {
-        if (ptr->data[i].ind == x) {
-            return i;
+    if(ptr==NULL){
+        printf("La base de donnee est vide\n");
+        return;
+    }else
+    {
+        if(ptr->tete==NULL){
+            printf("La liste d'etudiants est vide\n");
+            return;
         }
+    }
+    int i;
+    Noeud *nav=ptr->tete;
+    while(nav!=NULL){
+        afficherEtudiant(nav->data);
+        nav=nav->suivant;
+    }
+    printf("\n");
+}
+int recherche(BaseEtudiants *ptr, int valeur)
+{
+    if(ptr==NULL){
+        printf("Base de donnees introuvable\n");
+        return -1;
+    }else
+    {
+        if(ptr->tete==NULL){
+            printf("Base de donnees vide\n");
+            return -1;
+        }
+    }
+    Noeud *nav=ptr->tete;
+    while(nav!=NULL)
+    {
+        if(nav->data->ind==valeur){
+            return 1;
+        }
+        nav=nav->suivant;
     }
     return -1;
 }
-
-void Supprimer(BaseEtudiants *ptr, int x)
+void InsererEnTete(BaseEtudiants **ptr)
 {
-    if (ptr == NULL || ptr->data == NULL) {
-        printf("Aucun etudiant n'existe\n");
+    if(*ptr==NULL){
+        printf("Base de donnees introuvable\n");
         return;
     }
-    int y = recherche(ptr, x);
-    if (y == -1) {
-        printf("Cet etudiant n'existe pas \n");
+    Noeud *nouveau=creerNoeud(*ptr);
+    nouveau->data=creerEtudiant(*ptr);
+    if(nouveau->data==NULL){
+        free(nouveau);
         return;
     }
-    free(ptr->data[y].note);
-    for (int i = y; i < ptr->taille - 1; i++) {
-        ptr->data[i] = ptr->data[i + 1];
-    }
-    ptr->taille--;
+    nouveau->suivant=(*ptr)->tete;
+    (*ptr)->tete=nouveau;
+    (*ptr)->taille++;
 }
-
-void Modifier(BaseEtudiants *ptr, int x)
+void InsererEnQueue(BaseEtudiants **ptr)
 {
-    if (ptr == NULL || ptr->data == NULL) {
-        printf("Aucun etudiant n'existe \n");
+    if(*ptr==NULL){
+        printf("Base de donnees introuvable\n");
         return;
     }
-    int y = recherche(ptr, x);
-    if (y == -1) {
-        printf("Cet etudiant n'existe pas \n");
+    Noeud *nouveau=creerNoeud(*ptr);
+    nouveau->data=creerEtudiant(*ptr);
+    if(nouveau->data==NULL){
+        free(nouveau);
         return;
     }
-
-    char temp[20];
+    if((*ptr)->tete==NULL){
+        (*ptr)->tete=nouveau;
+    }else
+    {
+        Noeud *temp= (*ptr)->tete;
+        while(temp->suivant!=NULL){
+            temp=temp->suivant;
+        }
+        temp->suivant=nouveau;
+    }
+    (*ptr)->taille++;
+}
+int supprimer(BaseEtudiants **ptr,int valeur)
+{
+    if(*ptr==NULL){
+        printf("Base de donnees introuvable\n");
+        return 0;
+    }else
+    {
+        if((*ptr)->tete==NULL){
+            printf("La base de donnees est vide\n");
+            return 0;
+        }
+    }
+    Noeud *courant= (*ptr)->tete;
+    Noeud *precedent= NULL;
+    while(courant!=NULL){
+        if(courant->data->ind==valeur){
+            if(precedent==NULL){
+                (*ptr)->tete=courant->suivant;
+            } else {
+                precedent->suivant=courant->suivant;
+            }
+            free(courant->data->note);
+            free(courant->data);
+            free(courant);
+            (*ptr)->taille--;
+            return 1;
+        }
+        precedent=courant;
+        courant=courant->suivant;
+    }
+    return 0;
+}
+void LibererBase(BaseEtudiants **ptr)
+{
+    Noeud *temp= (*ptr)->tete;
+    while(temp!=NULL){
+        Noeud *unit=temp->suivant;
+        free(temp->data->note);
+        free(temp->data);
+        free(temp);
+        temp=unit;
+    }
+    free(*ptr);
+}
+void Interface(BaseEtudiants **ptr)
+{
     int choix;
-
-    do {
-        printf("Que voulez-vous modifier ?\n");
-        printf("1- Nom\n");
-        printf("2- Matricule\n");
-        printf("3- Notes\n");
-        printf("4- Tout\n");
-        printf("Entrez votre choix : \n");
-        if (fgets(temp, sizeof(temp), stdin) == NULL) {
-            continue;
+    char temp[100];
+    printf("1. Ajouter un etudiant en tete\n");
+    printf("2. Ajouter un etudiant en fin\n");
+    printf("3. Rechercher un etudiant\n");
+    printf("4. Afficher tous les etudiants\n");
+    printf("5. Afficher les etudiants ayant une moyenne superieur ou egale a 10\n");
+    printf("6. Afficher les etudiants ayant une moyenne inferieur a 10\n");
+    printf("7. Supprimer un etudiant\n");
+    printf("8. Quitter\n");
+    do{
+        printf("Entrez votre choix: ");
+        fgets(temp,sizeof(temp),stdin);
+        if(!EstEntier(temp)){
+            printf("Attention!!! Entrez uniquement un nombre ici: \n");
         }
-        if (!EstEntier(temp)) {
-            printf("Choix invalide. Entrez 1, 2, 3 ou 4.\n");
-            continue;
-        }
-        choix = atoi(temp);
-    } while (choix < 1 || choix > 4);
-
-    if (choix == 1 || choix == 4) {
-        printf("Entrez le nouveau nom de l'etudiant: \n");
-        if (fgets(ptr->data[y].nom, sizeof(ptr->data[y].nom), stdin) != NULL) {
-            ptr->data[y].nom[strcspn(ptr->data[y].nom, "\r\n")] = '\0';
-        }
-    }
-
-    if (choix == 2 || choix == 4) {
-        do {
-            printf("Entrez le nouveau matricule de l\'etudiant: \n");
-            if (fgets(temp, sizeof(temp), stdin) == NULL) {
-                continue;
+    }while(!EstEntier(temp));
+    choix=atoi(temp);
+    switch(choix)
+    {
+    case 1:
+        do{
+            printf("Combien d'etudiants voulez-vous ajouter en tete? ");
+            fgets(temp,sizeof(temp),stdin);
+            if(!EstEntier(temp)){
+                printf("Attention!!! Entrez uniquement un nombre ici: \n");
             }
-            if (!EstEntier(temp)) {
-                printf("Attention!!! Ceci n\'est pas un entier \n");
+        }while(!EstEntier(temp));
+        int x=atoi(temp);
+        for(int i=0;i<x;i++)
+        {
+            InsererEnTete(ptr);
+        }
+        break;
+    case 2:
+        do{
+            printf("Combien d'etudiants voulez-vous ajouter en fin? ");
+            fgets(temp,sizeof(temp),stdin);
+            if(!EstEntier(temp)){
+                printf("Attention!!! Entrez uniquement un nombre ici: \n");
             }
-        } while (!EstEntier(temp));
-        ptr->data[y].ind = atoi(temp);
-    }
-
-    if (choix == 3 || choix == 4) {
-        float *notes = malloc(n * sizeof(float));
-        if (notes == NULL) {
-            printf("Erreur d\'allocation pour les notes\n");
-            exit(1);
+        }while(!EstEntier(temp));
+        int y=atoi(temp);
+        for(int i=0;i<y;i++)
+        {
+            InsererEnQueue(ptr);
         }
-
-        for (int i = 0; i < n; i++) {
-            do {
-                printf("Entrez la %d e note de l'etudiant: \n", i + 1);
-                if (scanf("%f", &notes[i]) != 1) {
-                    printf("Valeur non valide. Recommencez.\n");
-                    while (getchar() != '\n');
-                    continue;
+        break;
+    case 3:
+        do{
+            printf("Entrez le matricule de l'etudiant a rechercher: ");
+            fgets(temp,sizeof(temp),stdin);
+            if(!EstEntier(temp)){
+                printf("Attention!!! Entrez uniquement un nombre ici: \n");
+            }
+        }while(!EstEntier(temp));
+        recherche((*ptr), atoi(temp));
+        break;
+    case 4:
+        afficher(*ptr);
+        break;
+    case 5:
+        printf("Les etudiants ayant une moyenne superieur ou egale a 10 sont: \n");
+        Noeud *nav= (*ptr)->tete;
+        while(nav!=NULL){
+            if(nav->data->moy>=10){
+                afficherEtudiant(nav->data);
+            }
+            nav=nav->suivant;
+        }
+        break;
+    case 6:
+        printf("Les etudiants ayant une moyenne inferieur a 10 sont: \n");
+        Noeud *nav2= (*ptr)->tete;
+        while (nav2!=NULL)
+        {
+            if(nav2->data->moy<10){
+                afficherEtudiant(nav2->data);
+            }
+            nav2=nav2->suivant;
+        }
+        break;
+    case 7:
+        do{
+            printf("Combien d'etudiants voulez-vous supprimer? ");
+            fgets(temp,sizeof(temp),stdin);
+            if(!EstEntier(temp)){
+                printf("Attention!!! Entrez uniquement un nombre ici: \n");
+            }
+        }while(!EstEntier(temp));
+        x=atoi(temp);
+        for(int i=0;i<x;i++)
+        {
+            char temp3[100];
+            do{
+                printf("Entrez le matricule de l'etudiant a supprimer: ");
+                fgets(temp3,sizeof(temp3),stdin);
+                if(!EstEntier(temp3)){
+                    printf("Attention!!! Entrez uniquement un nombre ici: \n");
                 }
-                if (notes[i] < 0.0f || notes[i] > 20.0f) {
-                    printf("La note doit etre entre 0 et 20.\n");
-                    continue;
-                }
-                break;
-            } while (1);
+            }while(!EstEntier(temp3));
+            if(supprimer(ptr, atoi(temp3))){
+                printf("Etudiant supprime avec succes\n");
+            }else{
+                printf("Etudiant non trouve\n");
+                i--;
+            }
         }
-        while (getchar() != '\n');
-
-        free(ptr->data[y].note);
-        ptr->data[y].note = notes;
-        ptr->data[y].moy = 0.0f;
-        for (int i = 0; i < n; i++) {
-            ptr->data[y].moy += notes[i];
-        }
-        ptr->data[y].moy /= n;
-    }
+        break;
+    case 8:
+        LibererBase(ptr);
+        printf("Au revoir!\n");
+        break;
+    default:
+        printf("Choix invalide\n");
+        break;
+    }while(choix!=8);
 }
-
-void Interface(BaseEtudiants *ptr)
-{
-    int y;
-    char conf, temp[20];
-    int rep, choix;
-
-    do {
-        printf("Que voulez vous faire? \n");
-        printf("-------------------------------------------------- \n");
-        printf("1- Ajouter un ou plusieurs etudiants \n");
-        printf("2- Verifier qu'un etudiant existe \n");
-        printf("3- Modifier un etudiant \n");
-        printf("4- Supprimer un etudiant \n");
-        printf("5- Afficher un etudiant en particulier \n");
-        printf("6- Afficher les etudiants \n");
-        printf("7- Afficher les etudiants avec une moyenne superieure a 10 \n");
-        printf("8- Afficher les etudiants avec une moyenne inferieure a 10 \n");
-        printf("9- Quitter \n");
-        printf("-------------------------------------------------- \n");
-        printf("Entrez votre choix: \n");
-        if (scanf("%d", &choix) != 1) {
-            printf("Choix invalide.\n");
-            while (getchar() != '\n');
-            continue;
-        }
-        while (getchar() != '\n');
-
-        switch (choix) {
-            case 1:
-                do {
-                    printf("Entrez le nombre d'etudiants a ajouter: \n");
-                    fgets(temp, sizeof(temp), stdin);
-                    if (!EstEntier(temp)) {
-                        printf("Attention!!! Ceci n'est pas un entier\n");
-                    }
-                } while (!EstEntier(temp));
-                rep = atoi(temp);
-                for (int i = 0; i < rep; i++) {
-                    AjouterEtudiant(ptr);
-                }
-                break;
-
-            case 2:
-                do {
-                    printf("Entrez le matricule de l'etudiant a verifier: \n");
-                    fgets(temp, sizeof(temp), stdin);
-                    if (!EstEntier(temp)) {
-                        printf("Attention!!! Ceci n'est pas un entier\n");
-                    }
-                } while (!EstEntier(temp));
-                rep = atoi(temp);
-                y = recherche(ptr, rep);
-                if (y == -1) {
-                    printf("Cet etudiant n'existe pas \n");
-                } else {
-                    printf("Cet etudiant existe \n");
-                }
-                break;
-
-            case 3:
-                do {
-                    printf("Entrez le matricule de l'etudiant a modifier: \n");
-                    fgets(temp, sizeof(temp), stdin);
-                    if (!EstEntier(temp)) {
-                        printf("Attention!!! Ceci n'est pas un entier\n");
-                    }
-                } while (!EstEntier(temp));
-                rep = atoi(temp);
-                Modifier(ptr, rep);
-                break;
-
-            case 4:
-                do {
-                    printf("Entrez le matricule de l'etudiant a supprimer: \n");
-                    fgets(temp, sizeof(temp), stdin);
-                    if (!EstEntier(temp)) {
-                        printf("Attention!!! Ceci n'est pas un entier\n");
-                    }
-                } while (!EstEntier(temp));
-                rep = atoi(temp);
-                Supprimer(ptr, rep);
-                break;
-
-            case 5:
-                do {
-                    printf("Entrez le matricule de l'etudiant a afficher: \n");
-                    fgets(temp, sizeof(temp), stdin);
-                    if (!EstEntier(temp)) {
-                        printf("Attention!!! Ceci n'est pas un entier\n");
-                    }
-                } while (!EstEntier(temp));
-                rep = atoi(temp);
-                y = recherche(ptr, rep);
-                if (y == -1) {
-                    printf("Cet etudiant n'existe pas \n");
-                } else {
-                    afficher(&ptr->data[y]);
-                }
-                break;
-
-            case 6:
-                if (ptr == NULL || ptr->data == NULL || ptr->taille == 0) {
-                    printf("Aucun etudiant a afficher.\n");
-                    break;
-                }
-                for (int j = 0; j < ptr->taille; j++) {
-                    afficher(&ptr->data[j]);
-                }
-                break;
-
-            case 7:
-                if (ptr == NULL || ptr->data == NULL || ptr->taille == 0) {
-                    printf("Aucun etudiant a afficher.\n");
-                    break;
-                }
-                for (int j = 0; j < ptr->taille; j++) {
-                    if (ptr->data[j].moy >= 10.0f) {
-                        afficher(&ptr->data[j]);
-                    }
-                }
-                break;
-
-            case 8:
-                if (ptr == NULL || ptr->data == NULL || ptr->taille == 0) {
-                    printf("Aucun etudiant a afficher.\n");
-                    break;
-                }
-                printf("Les etudiants avec une moyenne inferieure a 10 sont : \n");
-                for (int j = 0; j < ptr->taille; j++) {
-                    if (ptr->data[j].moy < 10.0f) {
-                        afficher(&ptr->data[j]);
-                    }
-                }
-                break;
-
-            case 9:
-                printf("Voulez vous vraiment quitter? (O/N) \n");
-                scanf(" %c", &conf);
-                while (getchar() != '\n');
-                if (conf == 'O' || conf == 'o') {
-                    return;
-                }
-                break;
-
-            default:
-                printf("Choix invalide \n");
-                break;
-        }
-    } while (1);
-}
-
 int main()
 {
-    BaseEtudiants *ptr = NULL;
-    printf("Entrez le nombre de notes par etudiant: \n");
-    if (scanf("%d", &n) != 1 || n <= 0) {
-        printf("Nombre de notes invalide.\n");
+    char temp[100];
+    BaseEtudiants *base = initBase(base);
+    if(base==NULL){
+        printf("Erreur d'allocation de la base de donnees d'etudiants\n");
         return 1;
     }
-    while (getchar() != '\n');
-
-    creerBase(&ptr, 2);
-    Interface(ptr);
-
-    for (int i = 0; i < ptr->taille; i++) {
-        free(ptr->data[i].note);
+    do{
+        printf("Entrez le nombre de notes par etudiants:\n");
+        fgets(temp,sizeof(temp),stdin);
+        if(!EstEntier(temp)){
+            printf("ATTENTION CECI N'EST PAS UN ENTIER!!!\n");
+        }
+    }while(!EstEntier(temp));
+    n=atoi(temp);
+    if(n<=0){
+        printf("Le nombre de notes doit etre supperieur a 0\n");
+        return 1;
     }
-    free(ptr->data);
-    free(ptr);
+    Interface(&base);
     return 0;
 }
