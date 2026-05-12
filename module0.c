@@ -46,11 +46,20 @@ Noeud *creerNoeud(BaseEtudiants *ptr)
 }
 int EstEntier(char *x)
 {
-    if(strlen(x)==0){return 0;};
-    for(int i=0;i<strlen(x);i++)
-    {
-        if(x[i]=='\n'){continue;};
-        if(!isdigit(x[i])){return 0;};
+    if (x == NULL) {
+        return 0;
+    }
+    size_t len = strlen(x);
+    if (len == 0) {
+        return 0;
+    }
+    for (size_t i = 0; i < len; i++) {
+        if (x[i] == '\n' || x[i] == '\r') {
+            continue;
+        }
+        if (!isdigit((unsigned char)x[i])) {
+            return 0;
+        }
     }
     return 1;
 }
